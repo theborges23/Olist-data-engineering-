@@ -5,7 +5,7 @@ DB_PASS = "teste"
 
 import psycopg2
 
-'''
+
 #Criando tabela pedidos
 
 conn = psycopg2.connect(dbname=DB_NAME, user=DB_USER, password=DB_PASS, host=DB_HOST)
@@ -16,11 +16,11 @@ cur.execute("CREATE TABLE pedidos("
             "order_id VARCHAR(35) PRIMARY KEY, "
             "customer_id VARCHAR(35) NOT NULL,"
             "order_status VARCHAR(30) NOT NULL,"
-            "order_purchase_timestamp VARCHAR(20) NOT NULL,"
-            "order_approved_at VARCHAR(20) NULL,"
-            "order_delivered_carrier_date VARCHAR(20) NULL,"
-            "order_delivered_customer_date VARCHAR(20) NULL,"
-            "order_estimated_delivery_date VARCHAR(20) NULL"
+            "order_purchase_timestamp VARCHAR(6) NOT NULL,"
+            "order_approved_at VARCHAR(6) NULL,"
+            "order_delivered_carrier_date VARCHAR(6) NULL,"
+            "order_delivered_customer_date VARCHAR(6) NULL,"
+            "order_estimated_delivery_date VARCHAR(6) NULL"
             ");")
 
 conn.commit()
@@ -45,8 +45,8 @@ cur.execute("CREATE TABLE reviews("
             "review_score SMALLINT NOT NULL,"
             "review_comment_tittle TEXT NULL,"
             "review_comment_message TEXT NULL,"
-            "review_creation_date VARCHAR(25) NOT NULL,"
-            "review_answer_timestamp VARCHAR(25) NOT NULL,"
+            "review_creation_date VARCHAR(6) NOT NULL,"
+            "review_answer_timestamp VARCHAR(6) NOT NULL,"
             "FOREIGN KEY (order_id) REFERENCES pedidos(order_id)"
             ");")
 
@@ -55,7 +55,7 @@ conn.commit()
 cur.close()
 
 conn.close()
-'''
+
 
 #-----------------------------------------------------------------------------------------------------------------------
 
@@ -128,7 +128,6 @@ with conn.cursor() as cur:
 #-----------------------------------------------------------------------------------------------------------------------
 
 '''
-
 conn = psycopg2.connect(dbname=DB_NAME, user=DB_USER, password=DB_PASS, host=DB_HOST)
 
 with conn.cursor() as cur:
@@ -166,11 +165,11 @@ with conn.cursor() as cur:
 
     conn.close()
 
-'''
+
 
 #-----------------------------------------------------------------------------------------------------------------------
 
-'''
+
 
 #Criando tabela geolocation, pagamentos, clientes e produtos
 
@@ -219,13 +218,13 @@ with conn.cursor() as cur:
     conn.close()
 
 #-----------------------------------------------------------------------------------------------------------------------
-'''
+
 
 conn = psycopg2.connect(dbname=DB_NAME, user=DB_USER, password=DB_PASS, host=DB_HOST)
 
 with conn.cursor() as cur:
-    '''
-    #CRINANDO TABELA DE HORAS
+
+    #CRIANDO TABELA DE HORAS
     cur.execute("CREATE TABLE horas("
                 "hora_id SMALLINT PRIMARY KEY,"
                 "hora SMALLINT UNIQUE"
@@ -242,8 +241,14 @@ with conn.cursor() as cur:
     cur.execute("ALTER TABLE horas "
                 "ALTER COLUMN hora_id TYPE VARCHAR(6);")
     
-    '''
+    
+    cur.execute("ALTER TABLE tempo "
+                "ALTER COLUMN tempo_id TYPE VARCHAR(6);")
+    
 
     conn.commit()
 
     conn.close()
+    '''
+
+#ADICIONAR TODAS AS RELAÇÕES DE TEMPO!!!!!!
