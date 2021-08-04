@@ -41,7 +41,7 @@ with conn.cursor() as cur:
 
     cur.execute("CREATE TABLE reviews("
                 "review_id VARCHAR(35) PRIMARY KEY, "
-                "order_id VARCHAR(35) NOT NULL UNIQUE, "
+                "order_id VARCHAR(35) NOT NULL, "
                 "review_score SMALLINT NOT NULL, "
                 "review_comment_tittle TEXT NULL, "
                 "review_comment_message TEXT NULL, "
@@ -96,7 +96,7 @@ with conn.cursor() as cur:
 
     cur.execute("CREATE TABLE clientes("
                 "customer_unique_id VARCHAR(35) PRIMARY KEY,"
-                "customer_id VARCHAR(35),"
+                "customer_id VARCHAR(35) UNIQUE,"
                 "customer_zip_code_prefix INT NOT NULL,"
                 "customer_city TEXT NOT NULL,"
                 "customer_state VARCHAR(2) NOT NULL,"
@@ -105,8 +105,8 @@ with conn.cursor() as cur:
                 "FOREIGN KEY (customer_state) REFERENCES estados(estado)"
                 ");")
 
-    cur.execute("ALTER TABLE orders "
-                "ADD FOREIGN KEY (customer_id) REFERENCES clientes(customer_unique_id)")
+    cur.execute("ALTER TABLE pedidos "
+                "ADD FOREIGN KEY (customer_id) REFERENCES clientes(customer_id)")
 
     cur.execute("CREATE TABLE vendedores("
                 "seller_id VARCHAR(35) PRIMARY KEY,"
