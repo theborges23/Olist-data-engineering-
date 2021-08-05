@@ -86,11 +86,10 @@ with conn.cursor() as cur:
     cur.execute("CREATE TABLE produtos("
                 "product_id VARCHAR(35) PRIMARY KEY,"
                 "product_category_name VARCHAR(50) NOT NULL,"
-                "product_name_lenght SMALLINT NOT NULL,"
                 "product_description_lenght SMALLINT NULL,"
                 "product_photos_qty SMALLINT NULL,"
                 "product_weight_g INT NULL,"
-                "product_length_cm DECIMAL NULL,"
+                "product_lenght_cm DECIMAL NULL,"
                 "product_width_cm DECIMAL NULL"
                 ");")
 

@@ -34,6 +34,13 @@ def unicos(values: csv.reader, position: int) -> list:
 
     return unicos
 
+def devolve_null(valor: str) -> None:
+    if valor == '':
+        return None
+    else:
+        return valor
+
+
 
 
 conn = psycopg2.connect(dbname=DB_NAME, user=DB_USER, password=DB_PASS, host=DB_HOST)
@@ -193,31 +200,66 @@ with conn.cursor() as cur:
                                                                             formata_data(reviews[i][6]),
                                                                             formata_hora(reviews[i][6])))
 
-#CONTINUAR DAQUI A TRATAR OS DADOS
-
     #preenchendo a tabela pagamentos
 
-    with open('olist_order_payments_dataset.csv', 'r') as pagamentos:
+    with open('olist_order_payments_dataset.csv', 'r', encoding="utf8") as pagamentos:
         payments_reader = csv.reader(pagamentos)
-        next(payments_reader)
-        for linha in payments_reader:
-            cur.execute("INSERT INTO pagamentos(order_id, payment_sequential, payment_type, payment_installments,"
-                        " payment_value)"
-                        "VALUES (%s, %s, %s, %s, %s)", (linha[0], linha[1], linha[2], linha[3], linha[4]))
+        payments = list(payments_reader)
+        cur.execute("SELECT * FROM pedidos;")
+        leitura = cur.fetchall()
+        existentes = []
+        for j in range(len(leitura)):
+            existentes.append(leitura[j][0])
+        for i in range(1, len(payments)):
+            if payments[i][0] in existentes:
+                cur.execute("INSERT INTO pagamentos(order_id, payment_sequential, payment_type, payment_installments,"
+                            " payment_value)"
+                            "VALUES (%s, %s, %s, %s, %s)", (payments[i][0], payments[i][1], payments[i][2], payments[i][3],
+                            payments[i][4]))
 
     #preenchendo a tabela produtos
 
-    with open('olist_products_dataset.csv', 'r') as produtos:
-        products_reader = csv.reader(produtos)
-        next(products_reader)
-        for linha in products_reader:
-            cur.execute("INSERT INTO produtos(product_id, product_category_name, product_name_lenght, "
-                        "product_description_lenght, product_photos_qty, product_weight_g, product_lenght_cm, "
-                        "product_width_cm)"
-                        "VALUES (%s, %s, %s, %s, %s, %s, %s, %s)", (linha[0], linha[1], linha[2], linha[3], linha[4],
-                        linha[5], linha[6], linha[7]))
+    with conn.cursor() as cur:
+        with open('olist_products_dataset.csv', 'r') as produtos:
+            products_reader = csv.reader(produtos)
+            next(products_reader)
+            for linha in products_reader:
+                cur.execute("INSERT INTO produtos(product_id, product_category_name, "
+                            "product_description_lenght, product_photos_qty, product_weight_g, product_lenght_cm, "
+                            "product_width_cm)"
+                            "VALUES (%s, %s, %s, %s, %s, %s, %s)",
+                            (linha[0], linha[1], devolve_null(linha[3]), devolve_null(linha[4]),
+                             devolve_null(linha[5]), devolve_null(linha[6]), devolve_null(linha[7])))
 
+    # Existiam alguns ceps do arquivo de vendedores que não estavam cadastrados, abaixo fazemos a leitura e adição dos mesmos
+    cur.execute("SELECT * FROM zip_code;")
+    leitura = cur.fetchall()
+    existentes = []
+    for j in range(len(leitura)):
+        existentes.append(leitura[j][1])
+    with open('olist_sellers_dataset.csv', 'r') as vendedores:
+        seller_reader = csv.reader(vendedores)
+        next(seller_reader)
+        cep = unicos(seller_reader, 1)
+        for i in range(len(cep)):
+            if int(cep[i]) not in existentes:
+                cur.execute("INSERT INTO zip_code(zip_code_prefix) "
+                            "VALUES (%s)", (int(cep[i]),))
 
+    # INCLUINDO CIDADES QUE ESTAVAM NA NO ARQUIVO DE VENDEDORES MAS NAO NO DE GEOLOCALIZAÇÃO
+    cur.execute("SELECT * FROM cidades;")
+    leitura = cur.fetchall()
+    existentes = []
+    for j in range(len(leitura)):
+        existentes.append(leitura[j][1])
+    with open('olist_sellers_dataset.csv', 'r') as vendedores:
+        sellers_reader = csv.reader(vendedores)
+        next(sellers_reader)
+        cit = unicos(sellers_reader, 2)
+        for i in range(len(cit)):
+            if cit[i] not in existentes:
+                cur.execute("INSERT INTO cidades(cidade) "
+                            "VALUES (%s)", (cit[i],))
     #preenchendo a tabela vendedores
 
     with open('olist_sellers_dataset.csv', 'r') as vendedores:
@@ -227,15 +269,21 @@ with conn.cursor() as cur:
             cur.execute("INSERT INTO vendedores(seller_id, seller_zip_code_prefix, seller_city, seller_state)"
                         "VALUES (%s, %s, %s, %s)", (linha[0], linha[1], linha[2], linha[3]))
 
-    #preenchendo a tabela order_items
-
     with open('olist_order_items_dataset.csv', 'r') as pedidos_itens:
         order_items_reader = csv.reader(pedidos_itens)
-        next(order_items_reader)
-        for linha in sellers_reader:
-            cur.execute("INSERT INTO order_items(order_id, order_item_id, product_id, seller_id, shipping_limit_date,"
-                        " shipping_limit_time, price, freight_value)"
-                        "VALUES (%s, %s, %s, %s, %s, %s, %s, %s)", linha[0], linha[1], linha[2], linha[3], formata_data(linha[4]), formata_hora(linha[4]), linha[5], linha[6])
+        order_items = list(order_items_reader)
+        cur.execute("SELECT * FROM pedidos;")
+        leitura = cur.fetchall()
+        existentes = []
+        for j in range(len(leitura)):
+            existentes.append(leitura[j][0])
+        for i in range(1, len(order_items)):
+            if order_items[i][0] in existentes:
+                cur.execute("INSERT INTO order_items(order_id, order_item_id, product_id, seller_id, shipping_limit_date,"
+                            " shipping_limit_time, price, freight_value)"
+                            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s)", (order_items[i][0], order_items[i][1],
+                            order_items[i][2], order_items[i][3], formata_data(order_items[i][4]),
+                            formata_hora(order_items[i][4]), order_items[i][5], order_items[i][6]))
 
 
     conn.commit()

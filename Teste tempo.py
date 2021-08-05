@@ -34,58 +34,41 @@ def unicos(values: csv.reader, position: int) -> list:
 
     return unicos
 
+def devolve_null(valor: str) -> None:
+    if valor == '':
+        return None
+    else:
+        return valor
+
 
 
 conn = psycopg2.connect(dbname=DB_NAME, user=DB_USER, password=DB_PASS, host=DB_HOST)
 
 
 with conn.cursor() as cur:
-    with open('olist_order_reviews_dataset.csv', 'r', encoding="utf8") as reviews:
-        reviews_reader = csv.reader(reviews)
-        reviews = list(reviews_reader)
+    with open('olist_order_items_dataset.csv', 'r') as pedidos_itens:
+        order_items_reader = csv.reader(pedidos_itens)
+        order_items = list(order_items_reader)
         cur.execute("SELECT * FROM pedidos;")
         leitura = cur.fetchall()
         existentes = []
         for j in range(len(leitura)):
             existentes.append(leitura[j][0])
-        for i in range(1, len(reviews)):
-            if reviews[i][1] in existentes:
-                print('gravando')
-                cur.execute("INSERT INTO reviews(review_id, order_id, review_score, review_comment_tittle, "
-                            "review_comment_message, review_creation_date, review_creation_time, review_answer_date, "
-                            "review_answer_time)"
-                            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)", (reviews[i][0], reviews[i][1], reviews[i][2],
-                                                                            reviews[i][3], reviews[i][4],
-                                                                            formata_data(reviews[i][5]),
-                                                                            formata_hora(reviews[i][5]),
-                                                                            formata_data(reviews[i][6]),
-                                                                            formata_hora(reviews[i][6])))
+        for i in range(1, len(order_items)):
+            if order_items[i][0] in existentes:
+                cur.execute("INSERT INTO order_items(order_id, order_item_id, product_id, seller_id, shipping_limit_date,"
+                            " shipping_limit_time, price, freight_value)"
+                            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s)", (order_items[i][0], order_items[i][1],
+                            order_items[i][2], order_items[i][3], formata_data(order_items[i][4]),
+                            formata_hora(order_items[i][4]), order_items[i][5], order_items[i][6]))
+
     conn.commit()
     conn.close()
 
 """
 
 
-    with open('olist_order_reviews_dataset.csv', 'r', encoding="utf8") as reviews:
-        reviews_reader = csv.reader(reviews)
-        reviews = list(reviews_reader)
-        cur.execute("SELECT * FROM pedidos;")
-        leitura = cur.fetchall()
-        print(leitura)
-        existentes = []
-        for j in range(len(leitura)):
-            existentes.append(leitura[j][0])
-            print(leitura[j][0])
-        for i in range(1, len(reviews)):
-            if reviews[i] in existentes:
-                 print(f'{reviews[i][0]}, {reviews[i][1]}, {reviews[i][2]}, {reviews[i][3]}, {reviews[i][4]}, {formata_data(reviews[i][5])}, {formata_hora(reviews[i][5])},{formata_data(reviews[i][6])}, {formata_hora(reviews[i][6])}')
 
-              cur.execute("INSERT INTO reviews(review_id, order_id, review_score, review_comment_tittle, "
-                           "review_comment_message, review_creation_date, review_creation_time, review_answer_date, "
-                           "review_answer_time)"
-                           "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)", (reviews[i][0], reviews[i][1], reviews[i][2],
-                            reviews[i][3], reviews[i][4], formata_data(reviews[i][5]), formata_hora(reviews[i][5]),
-                            formata_data(reviews[i][6]), formata_hora(reviews[i][6])))
 """
 
 
