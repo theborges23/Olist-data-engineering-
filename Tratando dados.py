@@ -1,46 +1,11 @@
 import psycopg2
 import csv
+from ferramentas.funcoes import unicos, formata_data, formata_hora, devolve_null, ler_csv, cadastrados
 
 DB_HOST = "localhost"
 DB_NAME = "olistic"
 DB_USER = "postgres"
 DB_PASS = "teste"
-
-def formata_data(data: str) -> str:
-    """
-    Função que recebe uma string contendo a data, formata e devolve uma string pronta para inserção no banco de dados
-    """
-    if data == '':
-        return None
-    return data[8:10] + '/' + data[5:7] + '/' + data[2:4]
-
-def formata_hora(hora: str) -> str:
-    """
-    Função que recebe uma string contendo a hora, formata e devolve uma string pronta para inserção no banco de dados
-    """
-    if hora == '':
-        return None
-    return hora[11:19]
-
-
-def unicos(values: csv.reader, position: int) -> list:
-    """
-    recebe um objecto csv.reader e uma posição int e devolve uma lista contendo apenas valores únicos.
-    """
-    unicos = []
-    for linha in values:
-        if linha[position] not in unicos:
-            unicos.append(linha[position])
-
-    return unicos
-
-def devolve_null(valor: str) -> None:
-    if valor == '':
-        return None
-    else:
-        return valor
-
-
 
 
 conn = psycopg2.connect(dbname=DB_NAME, user=DB_USER, password=DB_PASS, host=DB_HOST)
@@ -125,6 +90,26 @@ with conn.cursor() as cur:
             if cit[i] not in existentes:
                 cur.execute("INSERT INTO cidades(cidade) "
                             "VALUES (%s)", (cit[i],))
+
+    #PREENCHENDO TABELA GEOLOCALIZAÇÃO
+
+    geolocation = ler_csv('olist_geolocation_dataset.csv')
+    for i in range(1, len(geolocation)):
+        cur.execute("DO $$"
+                    "BEGIN "
+                    "IF EXISTS (select * from geolocation where zip_code_prefix = %s) THEN "
+                    "UPDATE geolocation "
+                    "SET cidade = %s, "
+                    "estado = %s "
+                    "WHERE zip_code_prefix = %s;"
+                    "ELSE "
+                    "INSERT INTO geolocation(zip_code_prefix, cidade, estado)"
+                    "VALUES (%s, %s, %s);"
+                    "END IF;"
+                    "END"
+                    "$$",
+                    (geolocation[i][0], geolocation[i][3], geolocation[i][4], geolocation[i][0], geolocation[i][0],
+                     geolocation[i][3], geolocation[i][4]))
 
     #limpando a tabela clientes, algumas chaves que deveriam ser unicas estavam repetidas
     with open('olist_customers_dataset.csv', 'r') as clientes:
@@ -229,7 +214,7 @@ with conn.cursor() as cur:
                             "product_width_cm)"
                             "VALUES (%s, %s, %s, %s, %s, %s, %s)",
                             (linha[0], linha[1], devolve_null(linha[3]), devolve_null(linha[4]),
-                             devolve_null(linha[5]), devolve_null(linha[6]), devolve_null(linha[7])))
+                             devolve_null(linha[5]), devolve_null(linha[6]), devolve_null(linha[8])))
 
     # Existiam alguns ceps do arquivo de vendedores que não estavam cadastrados, abaixo fazemos a leitura e adição dos mesmos
     cur.execute("SELECT * FROM zip_code;")
